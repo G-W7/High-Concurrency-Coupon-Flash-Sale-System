@@ -7,21 +7,28 @@ import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
 import com.hmdp.service.IShopService;
 import com.hmdp.utils.SystemConstants;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+
+import static com.hmdp.utils.RedisConstants.CACHE_SHOP_KEY;
 
 /**
  * <p>
  * 前端控制器
  * </p>
  *
- * @author 虎哥
+ * @author GW
  * @since 2021-12-22
  */
 @RestController
 @RequestMapping("/shop")
 public class ShopController {
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Resource
     public IShopService shopService;
@@ -33,7 +40,7 @@ public class ShopController {
      */
     @GetMapping("/{id}")
     public Result queryShopById(@PathVariable("id") Long id) {
-        return Result.ok(shopService.getById(id));
+        return shopService.queryById(id);
     }
 
     /**
@@ -55,9 +62,16 @@ public class ShopController {
      * @return 无
      */
     @PutMapping
+    @Transactional
     public Result updateShop(@RequestBody Shop shop) {
+        Long id = shop.getId();
+        if (id == null) {
+            return Result.fail("店铺id不能为空");
+        }
         // 写入数据库
         shopService.updateById(shop);
+        // 删除缓存
+        stringRedisTemplate.delete(CACHE_SHOP_KEY + id);
         return Result.ok();
     }
 
