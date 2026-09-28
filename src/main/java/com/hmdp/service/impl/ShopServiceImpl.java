@@ -8,6 +8,7 @@ import com.hmdp.entity.Shop;
 import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hmdp.utils.CacheClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -26,28 +27,21 @@ import static com.hmdp.utils.RedisConstants.*;
  */
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
-
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private CacheClient cacheClient;
+
     @Override
     public Result queryById(Long id) {
-        String key = CACHE_SHOP_KEY + id;
-        String shopJson = stringRedisTemplate.opsForValue().get(key);
-        if (StrUtil.isNotBlank(shopJson)) {
-            Shop shop= JSONUtil.toBean(shopJson, Shop.class);
-            return Result.ok(shop);
-        }
-        if ("".equals(shopJson)) {
+        //预防缓存穿透
+        Shop shop = cacheClient.queryWithPassThrough(CACHE_SHOP_KEY, id, Shop.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+        //预防缓存击穿
+        //Shop shop = cacheClient.queryWithMutex(CACHE_SHOP_KEY, id, Shop.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+        //预防缓存击穿逻辑过期时间，设置逻辑过期时间
+        //Shop shop=cacheClient.queryWithLogicalExpire(CACHE_SHOP_KEY, id, Shop.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+        if (shop == null) {
             return Result.fail("店铺不存在");
         }
-        Shop shop = getById(id);
-        if (shop != null) {
-            long ttl = CACHE_SHOP_TTL + RandomUtil.randomInt(5);
-            stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(shop), ttl, TimeUnit.MINUTES);
-            return Result.ok(shop);
-        }else{
-            stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
-            return Result.fail("店铺不存在");
-        }
+        return Result.ok(shop);
     }
 }
+
