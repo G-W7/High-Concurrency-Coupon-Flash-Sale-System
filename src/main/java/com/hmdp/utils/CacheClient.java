@@ -13,8 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static com.hmdp.utils.RedisConstants.CACHE_NULL_TTL;
-import static com.hmdp.utils.RedisConstants.LOCK_SHOP_KEY;
+import static com.hmdp.utils.RedisConstants.*;
 
 
 /**
@@ -90,7 +89,7 @@ public class CacheClient {
         // 5.2.已过期，需要缓存重建
         // 6.缓存重建
         // 6.1.获取互斥锁
-        String lockKey = LOCK_SHOP_KEY + id;
+        String lockKey = LOCK_KEY + id;
         boolean isLock = tryLock(lockKey);
         // 6.2.判断是否获取锁成功
         if (isLock){
@@ -131,7 +130,7 @@ public class CacheClient {
 
         // 4.实现缓存重建
         // 4.1.获取互斥锁
-        String lockKey = LOCK_SHOP_KEY + id;
+        String lockKey = LOCK_KEY + id;
         R r = null;
         try {
             boolean isLock = tryLock(lockKey);
@@ -163,7 +162,7 @@ public class CacheClient {
     }
 
     private boolean tryLock(String key) {
-        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", 10, TimeUnit.SECONDS);
+        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", LOCK_TTL, TimeUnit.SECONDS);
         return BooleanUtil.isTrue(flag);
     }
 
