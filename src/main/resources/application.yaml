@@ -5,7 +5,7 @@ spring:
     name: hmdp
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/hmdp
+    url: jdbc:mysql://localhost:3306/hmdp?useSSL=false
     username: root
     password: 123456
   redis:
