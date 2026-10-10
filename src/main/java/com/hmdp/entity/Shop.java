@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
  * 
  * </p>
  *
- * @author 虎哥
- * @since 2021-12-22
+ * @author GW
+ * @since 2026-10-9
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
