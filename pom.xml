@@ -66,6 +66,13 @@
             <artifactId>redisson</artifactId>
             <version>3.13.6</version>
         </dependency>
+
+        <!-- Knife4j (OpenAPI3) 接口文档，适配 Spring Boot 2.7.x + JDK 8 -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+            <version>4.1.0</version>
+        </dependency>
     </dependencies>
 
     <build>

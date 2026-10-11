@@ -21,8 +21,24 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/voucher/**",
                         "/shop-type/**",
                         "/blog/hot",
-                        "/upload/**").order(1);
-        registry.addInterceptor(new RefreshTokenIntercepter(stringRedisTemplate)).addPathPatterns("/**").order(0);
+                        "/upload/**",
+                        "/doc.html",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/swagger-resources/**",
+                        "/v3/api-docs/**",
+                        "/webjars/**",
+                        "/favicon.ico").order(1);
+        registry.addInterceptor(new RefreshTokenIntercepter(stringRedisTemplate))
+                .addPathPatterns("/**")
+                .excludePathPatterns("/doc.html",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/swagger-resources/**",
+                        "/v3/api-docs/**",
+                        "/webjars/**",
+                        "/favicon.ico")
+                .order(0);
     }
 
 }
