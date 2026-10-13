@@ -1,0 +1,21 @@
+package com.hcfs.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class Knife4jConfig {
+
+    @Bean
+    public OpenAPI hmdpOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("高并发优惠券秒杀系统 API 文档")
+                        .description("高并发优惠券秒杀系统 项目接口文档（基于 Knife4j + OpenAPI3）")
+                        .version("v1.0.0")
+                        .contact(new Contact().name("GW")));
+    }
+}
