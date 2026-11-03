@@ -24,7 +24,7 @@ mybatis-plus:
   type-aliases-package: com.hcfs.entity # 别名扫描包
 logging:
   level:
-    com.hmdp: debug
+    com.hcfs: debug
 
 # ============ 接口文档配置 (Knife4j + springdoc) ============
 springdoc:
@@ -36,8 +36,10 @@ springdoc:
     path: /v3/api-docs
   group-configs:
     - group: default
-      paths-to-match: /**
-      packages-to-scan: com.hcfs.controller
+      paths-to-match:
+        - /**
+      packages-to-scan:
+        - com.hcfs.controller
 knife4j:
   enable: true
   setting:

@@ -1,0 +1,34 @@
+{
+  "Total" : {
+    "transaction" : "Total",
+    "sampleCount" : 5000,
+    "errorCount" : 354,
+    "errorPct" : 7.08,
+    "meanResTime" : 32.57940000000005,
+    "medianResTime" : 7.0,
+    "minResTime" : 2.0,
+    "maxResTime" : 448.0,
+    "pct1ResTime" : 90.90000000000055,
+    "pct2ResTime" : 232.0,
+    "pct3ResTime" : 412.0,
+    "throughput" : 541.0669840926306,
+    "receivedKBytesPerSec" : 203.9847892544097,
+    "sentKBytesPerSec" : 120.28912421545287
+  },
+  "秒杀下单请求" : {
+    "transaction" : "秒杀下单请求",
+    "sampleCount" : 5000,
+    "errorCount" : 354,
+    "errorPct" : 7.08,
+    "meanResTime" : 32.57940000000005,
+    "medianResTime" : 7.0,
+    "minResTime" : 2.0,
+    "maxResTime" : 448.0,
+    "pct1ResTime" : 90.90000000000055,
+    "pct2ResTime" : 232.0,
+    "pct3ResTime" : 412.0,
+    "throughput" : 541.0669840926306,
+    "receivedKBytesPerSec" : 203.9847892544097,
+    "sentKBytesPerSec" : 120.28912421545287
+  }
+}

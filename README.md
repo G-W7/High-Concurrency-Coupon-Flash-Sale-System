@@ -40,6 +40,8 @@
 - **Maven** 3.6+
 - **MySQL** 5.7+，需创建数据库 `hcfs`
 - **Redis** 5.0+（需支持 Stream 数据结构）
+- **Docker / Docker Compose**（可选，用于一键拉起 MySQL 与 Redis）
+- **JMeter** 5.x（可选，用于秒杀接口压力测试）
 
 ---
 
@@ -52,9 +54,21 @@ git clone https://github.com/G-W7/High-Concurrency-Coupon-Flash-Sale-System.git
 cd hm-dianping
 ```
 
-### 2. 初始化数据库
+### 2. 启动 MySQL 与 Redis
 
-导入 SQL 脚本（位于 `src/main/resources/db/hcfs.sql`）到 MySQL，创建 `hcfs` 数据库及相关表。
+**方式一：Docker Compose 一键启动（推荐）**
+
+```bash
+docker compose up -d
+```
+
+将自动拉起 `mysql:5.7`（容器 `hcfs-mysql`，首次启动自动建库并执行初始化脚本）与 `redis:7-alpine`（容器 `hcfs-redis`，开启 AOF 持久化），端口分别映射到本机 `3306` / `6379`，root 密码为 `123456`（与 `application.yaml` 保持一致）。
+
+**方式二：本地已有环境**
+
+手动导入 SQL 脚本（位于 `src/main/resources/db/hcfs.sql`）到 MySQL，创建 `hcfs` 数据库及相关表。
+
+> 脚本中 `tb_seckill_voucher` 的 `begin_time` / `end_time` 默认值为 `NULL`，兼容 MySQL 5.7+ 的 `NO_ZERO_DATE` 严格 SQL 模式。
 
 ### 3. 修改配置
 
@@ -129,6 +143,15 @@ hm-dianping
     ├── unlock.lua                  # 分布式锁释放脚本
     ├── mapper/VoucherMapper.xml
     └── db/hcfs.sql                 # 数据库初始化脚本
+├── docker-compose.yml              # MySQL 5.7 + Redis 7 一键启动
+└── jmeter                          # 秒杀接口压测工具包（见「八、性能压测」）
+    ├── prepare_data.ps1            # 压测数据预热（token / 库存）
+    ├── smoke_test.ps1              # 秒杀接口冒烟测试
+    ├── cleanup.ps1                 # 压测数据清理
+    ├── seckill.jmx                 # 秒杀接口压测计划
+    ├── shop_cache.jmx              # 商铺缓存接口压测计划
+    ├── tokens.csv                  # 参数化 token（压测时自动生成）
+    └── report_html/                # JMeter HTML 压测报告
 ```
 
 ---
@@ -261,7 +284,42 @@ flowchart TB
 
 ---
 
-## 八、主要接口一览
+## 八、性能压测（JMeter）
+
+项目内置了一套针对秒杀链路的 JMeter 压测工具包（位于 `jmeter/` 目录），配套 PowerShell 脚本完成数据准备与清理：
+
+| 文件 | 用途 |
+| --- | --- |
+| `prepare_data.ps1` | 通过 `hcfs-redis` 容器内的 redis-cli 批量写入虚拟登录 token（`login:token:{uuid}`）与秒杀库存（`seckill:stock:{voucherId}`），并导出 `tokens.csv` 供 JMeter 参数化使用；无需在 MySQL 中真实创建用户即可跑通秒杀链路 |
+| `smoke_test.ps1` | 用 `tokens.csv` 中的真实 token 发起一次秒杀请求，验证鉴权与库存是否就绪 |
+| `seckill.jmx` | 秒杀接口（`POST /voucher-order/seckill/{id}`）压测计划 |
+| `shop_cache.jmx` | 商铺缓存接口（`GET /shop/{id}`）压测计划 |
+| `cleanup.ps1` | 清理压测写入 Redis 的 token、库存、一人一单记录及 `stream.orders`，便于重复压测（不删除 MySQL 已落库订单） |
+| `report_html/` | JMeter HTML 压测报告 |
+
+**典型压测流程：**
+
+```powershell
+cd jmeter
+
+# 1. 预热数据（默认 200 个 token、优惠券 id=10、库存 100000）
+powershell -ExecutionPolicy Bypass -File .\prepare_data.ps1
+
+# 2. 冒烟测试，确认链路就绪
+powershell -ExecutionPolicy Bypass -File .\smoke_test.ps1
+
+# 3. 执行 JMeter 压测并生成 HTML 报告
+jmeter -n -t .\seckill.jmx -l .\result.jtl -e -o .\report_html
+
+# 4. 压测结束后清理 Redis 测试数据
+powershell -ExecutionPolicy Bypass -File .\cleanup.ps1
+```
+
+> 注意：`prepare_data.ps1` 生成的 token 数量需 ≥ JMeter 线程组的线程数；token 默认 TTL 为 2 小时，保证压测期间不过期。
+
+---
+
+## 九、主要接口一览
 
 | 模块 | 方法 | 路径 | 说明 |
 | --- | --- | --- | --- |
@@ -288,7 +346,7 @@ flowchart TB
 
 ---
 
-## 九、关键设计要点小结
+## 十、关键设计要点小结
 
 1. **双拦截器分离鉴权与续期**：公开路径也能刷新 Token，私有路径强制鉴权。
 2. **缓存工具泛型化**：以函数式接口封装缓存重建逻辑，业务方零重复代码。
@@ -298,6 +356,6 @@ flowchart TB
 
 ---
 
-## 十、声明
+## 十一、声明
 
 本项目为 **Redis 学习实战项目**，用于技术研究与个人能力提升，业务数据与场景均来源于公开教程，不作为商业用途。
